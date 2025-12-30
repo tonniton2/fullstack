@@ -3,14 +3,27 @@ import personService from './services/persons'
 import Persons from './components/Persons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
+import Notification from './components/Notification'
+import Error from './components/Error'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newFilter, setNewFilter] = useState('')
+  const [notificationMessage, setNotificationMessage] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
 
   const personsToShow = persons.filter(person => person.name.includes(newFilter))
+
+  const showNotification = (message) => {
+    setNotificationMessage(          
+      message
+    )        
+    setTimeout(() => {          
+      setNotificationMessage(null)        
+    }, 5000)
+  }
 
   useEffect(() => {
     personService      
@@ -52,7 +65,18 @@ const App = () => {
             setPersons(persons.map(person => person.id !== returnedPerson.id ? person : returnedPerson))     
             setNewName('')      
             setNewNumber('')
+            showNotification(`Updated ${personObject.name}`)
         })
+        .catch(error => {
+          setErrorMessage(          
+            `Information of ${personObject.name} has already been removed from server`
+          )     
+          setTimeout(() => {          
+            setErrorMessage(null)        
+          }, 5000)
+          setPersons(persons.filter(n => n.id !== id))   
+        })
+
       } else {
         console.log("Update cancelled")
       }
@@ -63,13 +87,16 @@ const App = () => {
           setPersons(persons.concat(returnedPerson))        
           setNewName('')      
           setNewNumber('')
+          showNotification(`Added ${personObject.name}`)
       })
     }
   }
 
   const deletePerson = (event) => {
     console.log("Button element", event)
-    if (window.confirm(`Delete ${event.target.parentElement.firstChild.textContent}?`)) {
+    const person_name = event.target.parentElement.firstChild.textContent
+    console.log("person_name", person_name)
+    if (window.confirm(`Delete ${person_name}?`)) {
       const id = event.target.getAttribute("person_id")
       console.log("Id", id)
       personService      
@@ -77,6 +104,7 @@ const App = () => {
         .then(data => {     
           console.log("data", data)   
           setPersons(persons.filter(person => person.id !== id))
+          showNotification(`Removed ${person_name}`)
       })
     } else {
       console.log("Deletion cancelled")
@@ -87,6 +115,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notificationMessage} />
+      <Error message={errorMessage} />
       <Filter newFilter={newFilter} handleFilterChange={handleFilterChange} />
       <h2>Add a new person</h2>
       <PersonForm newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange} addPerson={addPerson} />
