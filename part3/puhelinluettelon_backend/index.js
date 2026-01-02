@@ -5,6 +5,9 @@ app.use(express.json())
 const morgan = require('morgan')
 morgan.token('body', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
+const cors = require('cors')
+app.use(cors())
+
 
 let persons = [
     {
@@ -65,7 +68,6 @@ const generateId = () => {
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
-    //console.log(body)
     if (!body.name || !body.number) {
         return response.status(400).json({ 
         error: 'name or number missing' 
@@ -88,7 +90,7 @@ app.post('/api/persons', (request, response) => {
     response.json(person)
 })
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
